@@ -1,10 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from tqdm import *
-
-api_url = "http://localhost:8080/api/product/create"
-headers = {"Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNjgwMjk2NjY3LCJleHAiOjE2ODAzODMwNjd9.hwIGwRdCgOMbW6Ghpxve6FU0aKzCX10bKh0JwKFWeIHrRYcZsYb6NQCUnw34VQnvWeJmpHBZlySKxIGylQ2cXw"}
-
+import pandas as pd
 
 class Scrapper:
 
@@ -25,6 +22,7 @@ class Scrapper:
             "https://www.a101.com.tr/market/et-tavuk-balik/",
             "https://www.a101.com.tr/market/meyve-sebze/"
         ]
+        products_list = list()
 
         for link in tqdm(category_links):
             is_next_button = True
@@ -43,22 +41,8 @@ class Scrapper:
                         price = li.find("span", {"class": "current"})
                         stripped_price = price.text.strip(
                             "₺").replace(",", ".")
+                        products_list.append([stripped_name, stripped_price])
 
-                        response = requests.post(api_url, headers=headers, json=
-                        {
-                            "vendor" : "A101",
-                            "name" : stripped_name,
-                            "category": "ET",
-                            "weight": 324.3,
-                            "price": stripped_price,
-                            "logo": "A101 Logo",
-                            "market" : {
-                                "name" : "A101",
-                                "logo" : "A101 Logo",
-                            }
-                        })
-
-                        print(response.json())
                     except Exception as e:
                         pass
 
@@ -66,9 +50,8 @@ class Scrapper:
                 if soup.find("a", class_="page-link js-pagination-next") == None:
                     page = 1
                     is_next_button = False
-
-
-
+        df = pd.DataFrame(products_list, columns=["name", "price"])
+        df.to_csv(f".\\a101.csv", encoding="utf-8", index=False)
 
 if __name__ == "__main__":
     website = Scrapper()
